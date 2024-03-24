@@ -1,0 +1,77 @@
+# arquivo docker compose com o serviço de banco de dados mongoDB da bitnami
+
+version: '3.1'
+services:
+  rabbitmq:
+    image: bitnami/rabbitmq:latest
+    container_name: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ./rabbitmq/data:/bitnami/rabbitmq/mnesia
+      # - ./rabbitmq/certs:/certs
+      # - ./rabbitmq/init/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      # - ./rabbitmq/init/definitions.json:/etc/rabbitmq/definitions.json:ro
+    env_file:
+      - ./rabbitmq/env/rabbitmq.env
+    networks:
+      - notifications
+  # rabbitmqadmin:
+  #   image: rabbitmq/rabbitmq-admin:latest
+  #   container_name: rabbitmqadmin
+  #   command: ["/bin/sh", "./init.sh"]
+  #   depends_on:
+  #     - rabbitmq
+  #   networks:
+  #     - default
+  #   volumes:
+  #     - ./mock/config:/config
+
+  mongodb:
+    image: bitnami/mongodb:latest
+    container_name: mongodb
+    ports:
+      - 27017:27017
+    volumes:
+      # - ./mongodb/data:/bitnami/mongodb/data
+      - ./mongodb/certs:/certs
+      - ./mongodb/mock:/docker-entrypoint-initdb.d
+    env_file:
+      - ./mongodb/env/mongodb.env
+    networks:
+      - notifications
+
+  springboot:
+    image: bitnami/java:latest
+    container_name: springboot
+    ports:
+      - 8080:8080
+      - 8081:8081
+    environment:
+      - MONGODB_HOST=mongodb
+      - MONGODB_PORT=27017
+      - MONGODB_DATABASE=dbteste
+      - MONGODB_USERNAME=root
+      - MONGODB_PASSWORD=root
+      - SPRING_PROFILES_ACTIVE=dev 
+    volumes:
+      - ./springboot/java-sb-notifications:/app
+    command: ["java", "-jar", "/app/myapp.jar"]
+    depends_on:
+      - mongodb
+    networks:
+      - notifications
+
+  # cron:
+  #   image: cron:latest
+  #   volumes:
+  #     - ./springboot/java-sb-notifications/src/main/resources/cron.yaml:/etc/cron.d/cron.yaml
+  #   depends_on:
+  #     - springboot
+  #   networks:
+  #     - notifications
+
+networks:
+  notifications:
+    driver: bridge

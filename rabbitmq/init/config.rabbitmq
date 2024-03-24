@@ -1,0 +1,15 @@
+topic: offers_orders_cart_abandoned
+
+queues:
+  - name: offers
+    bindings:
+      - exchange: offers_orders_cart_abandoned
+        routing_key: offers
+  - name: orders
+    bindings:
+      - exchange: offers_orders_cart_abandoned
+        routing_key: orders
+  - name: cart_abandoned
+    bindings:
+      - exchange: offers_orders_cart_abandoned
+        routing_key: cart_abandoned
